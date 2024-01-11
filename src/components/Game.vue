@@ -40,15 +40,13 @@ const RecordTypes = computed(() => {
     Complex: ["Complex", "Trix"],
   };
   types = types[GameType.value];
-  let roundRecord = records.length % types.length;
-  roundRecord = records.slice(records.length - roundRecord);
+  let roundRecord = records.slice(0, records.length % (GameRounds.value + 1));
   roundRecord = roundRecord.map((record) => record.type);
   return types.filter((i) => !roundRecord.includes(i)).map((type) => ({ value: type, name: type }));
 });
 const recordType = ref(null);
 const recordTypeComputed = computed({
   get() {
-    console.log(RecordTypes.value);
     return recordType.value ?? RecordTypes.value[0]?.value;
   },
   set(value) {
