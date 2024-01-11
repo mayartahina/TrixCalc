@@ -2,6 +2,7 @@
 import { reactive, ref, computed } from "vue";
 import { FwbSelect, FwbToggle, FwbInput, FwbButton } from "flowbite-vue";
 
+const negativeGameTypes = ["King of Hearts", "Queens", "Diamonds", "Lutoosh", "Complex"];
 const GameTypes = reactive([
   { value: "Classic", name: "Classic" },
   { value: "Complex", name: "Complex" },
@@ -110,7 +111,7 @@ function addRecord() {
 
       <div class="mt-4">
         <h1 class="text-xl">Records</h1>
-        <table class="w-full text-sm text-left rtl:text-right text-gray-500" aria-label="Game Records">
+        <table class="w-full text-sm text-left rtl:text-right text-gray-500 text-center" aria-label="Game Records">
           <thead class="my-10 text-xs text-gray-700 uppercase bg-gray-300">
             <tr>
               <th scope="col" class="px-6 py-3">Type</th>
@@ -131,9 +132,7 @@ function addRecord() {
               <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                 {{ record.type }}
               </th>
-              <td class="px-6 py-4">
-                {{ record.point }}
-              </td>
+              <td class="px-6 py-4 "><span v-if="negativeGameTypes.includes(record.type) && record.point > 0">-</span>{{ record.point }}</td>
             </tr>
           </tbody>
         </table>
