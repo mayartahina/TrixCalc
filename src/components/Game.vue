@@ -98,8 +98,8 @@ function addRecord() {
         .slice(0, GameRounds.value)
         .reduce((a, b) => a + (b.type == "Trix" ? parseInt(b.point) : -parseInt(b.point)), 0),
     });
-    summaries++;
-    if (summaries == 4) {
+    summaries.value++;
+    if (summaries.value == 4) {
       timeGameEnded.value = new Date();
     }
   }
@@ -132,7 +132,7 @@ function addRecord() {
       </h1>
       <form v-if="summaries < 4" class="my-5" @submit.prevent.stop="addRecord">
         <fwb-select v-model="recordTypeComputed" :options="RecordTypes" label="Select a Game Type" />
-        <fwb-input class="my-1 py-1" pattern="[DKLQTC]?\d+" v-model="recordPoint" label="Points" />
+        <fwb-input class="my-1 py-1" pattern="[DKLQTC]?\d*" v-model="recordPoint" label="Points" />
         <div class="my-5 flex justify-center">
           <fwb-button gradient="teal-lime" type="submit">Add Record</fwb-button>
         </div>
