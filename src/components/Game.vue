@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, ref, computed } from "vue";
 import { FwbSelect, FwbToggle, FwbInput, FwbButton } from "flowbite-vue";
+import { FwbAlert } from "flowbite-vue";
 
 const negativeGameTypes = ["King of Hearts", "Queens", "Diamonds", "Lutoosh", "Complex"];
 const GameTypes = reactive([
@@ -25,14 +26,25 @@ function startGame() {
   timeGameStarted.value = new Date();
 }
 function endGame() {
+  if (summaries.value < 4) {
+    if (confirm("Are you sure you want to end the game?")) {
+      summaries.value = 4;
+      timeGameEnded.value = new Date();
+    }
+    return;
+  }
   gameInSession.value = false;
   timeGameEnded.value = null;
   timeGameStarted.value = null;
   records.splice(0, records.length);
-  summaries = 0;
+  summaries.value = 0;
 }
-
-const GameSummary = computed(() => records.filter((i) => i.type == "Round").reduce((a, b) => a + parseInt(b.point), 0));
+const errorMessage = ref("");
+const GameSummary = computed(() =>
+  records
+    .filter((i) => i.type != "Round")
+    .reduce((a, b) => a + (b.type == "Trix" ? parseInt(b.point) : -parseInt(b.point)), 0)
+);
 
 let recordPoint = ref("");
 const RecordTypes = computed(() => {
@@ -54,12 +66,30 @@ const recordTypeComputed = computed({
     recordType.value = value;
   },
 });
-let summaries = 0;
+let summaries = ref(0);
 const records = reactive([]);
 function addRecord() {
+  const shortcuts = {
+    K: "King of Hearts",
+    Q: "Queens",
+    D: "Diamonds",
+    L: "Lutoosh",
+    C: "Complex",
+    T: "Trix",
+  };
+  const type = shortcuts[recordPoint.value[0]] ?? recordTypeComputed.value;
+  if (!RecordTypes.value.map((i) => i.name).includes(type)) {
+    errorMessage.value = "Invalid Record Type [" + type + "]";
+    setTimeout(() => {
+      errorMessage.value = null;
+    }, 3000);
+    return;
+  }
+  const point =
+    (!parseInt(recordPoint.value) ? parseInt(recordPoint.value.slice(1)) : parseInt(recordPoint.value)) || 0;
   records.unshift({
-    type: recordTypeComputed.value,
-    point: !parseInt(recordPoint.value) ? 0 : parseInt(recordPoint.value),
+    type,
+    point,
   });
   if ((records.length - summaries) % GameRounds.value == 0) {
     records.unshift({
@@ -80,12 +110,20 @@ function addRecord() {
 
 <template>
   <main class="container p-2">
-    <h1 class="my-3 text-gray-700 text-center text-5xl">Trix</h1>
-
+    <h1 class="my-3 text-gray-700 text-center text-5xl"><span class=" text-red-400">T</span>rix</h1>
+    <fwb-alert class="my-5" v-if="errorMessage" closable icon type="danger" @close="errorMessage = null">
+      {{ errorMessage }}
+    </fwb-alert>
     <div v-if="gameInSession">
-      <p class="text-center text-l">
-        <b>{{ GameType }}</b> Game In Session
-      </p>
+      <div v-if="summaries < 4" class="flex justify-between items-center">
+        <p class="text-center text-l text-amber-600">
+          <b>{{ GameType }}</b> Game In Session
+        </p>
+        <fwb-button  color="red" @click="endGame">End Game</fwb-button>
+      </div>
+      <h2 v-else class="text-xl text-center text-green-700">
+        Game Completed
+      </h2>
       <h1
         class="text-2xl my-10 text-center"
         :class="{ 'text-green-400': GameSummary > 0, 'text-red-500': GameSummary < 0 }"
@@ -94,9 +132,9 @@ function addRecord() {
       </h1>
       <form v-if="summaries < 4" class="my-5" @submit.prevent.stop="addRecord">
         <fwb-select v-model="recordTypeComputed" :options="RecordTypes" label="Select a Game Type" />
-        <fwb-input class="my-1 py-1" pattern="[0-9]*" type="number" v-model="recordPoint" label="Points" />
+        <fwb-input class="my-1 py-1" pattern="[DKLQTC]?\d+" v-model="recordPoint" label="Points" />
         <div class="my-5 flex justify-center">
-          <fwb-button color="dark" type="submit">Add Record</fwb-button>
+          <fwb-button gradient="teal-lime" type="submit">Add Record</fwb-button>
         </div>
       </form>
       <div v-else>
@@ -109,7 +147,7 @@ function addRecord() {
         </div>
       </div>
 
-      <div class="mt-4">
+      <div v-if="records.length" class="mt-4">
         <h1 class="text-xl">Records</h1>
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 text-center" aria-label="Game Records">
           <thead class="my-10 text-xs text-gray-700 uppercase bg-gray-300">
@@ -132,7 +170,9 @@ function addRecord() {
               <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                 {{ record.type }}
               </th>
-              <td class="px-6 py-4 "><span v-if="negativeGameTypes.includes(record.type) && record.point > 0">-</span>{{ record.point }}</td>
+              <td class="px-6 py-4">
+                <span v-if="negativeGameTypes.includes(record.type) && record.point > 0">-</span>{{ record.point }}
+              </td>
             </tr>
           </tbody>
         </table>
