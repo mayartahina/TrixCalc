@@ -91,7 +91,7 @@ function addRecord() {
     type,
     point,
   });
-  if ((records.length - summaries) % GameRounds.value == 0) {
+  if ((records.length - summaries.value) % GameRounds.value == 0) {
     records.unshift({
       type: "Round",
       point: records
